@@ -13,6 +13,7 @@ import (
 
 	l4g "github.com/alecthomas/log4go"
 
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/utils"
 )
@@ -250,7 +251,7 @@ func handleResponse(c *Context, w http.ResponseWriter, response *model.CommandRe
 	if response.ResponseType == model.COMMAND_RESPONSE_TYPE_IN_CHANNEL {
 		post.Message = response.Text
 		post.UserId = c.Session.UserId
-		if _, err := CreatePost(c, post, true); err != nil {
+		if _, err := app.CreatePost(post, c.TeamId, true); err != nil {
 			c.Err = model.NewLocAppError("command", "api.command.execute_command.save.app_error", nil, "")
 		}
 	} else if response.ResponseType == model.COMMAND_RESPONSE_TYPE_EPHEMERAL && response.Text != "" {
@@ -258,7 +259,7 @@ func handleResponse(c *Context, w http.ResponseWriter, response *model.CommandRe
 		post.CreateAt = model.GetMillis()
 		post.UserId = c.Session.UserId
 		post.ParentId = ""
-		SendEphemeralPost(
+		app.SendEphemeralPost(
 			c.TeamId,
 			c.Session.UserId,
 			post,

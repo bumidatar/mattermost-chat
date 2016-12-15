@@ -79,7 +79,7 @@ func resetCmdF(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	api.Srv.Store.DropAllTables()
+	app.Srv.Store.DropAllTables()
 	CommandPrettyPrintln("Database sucessfully reset")
 
 	return nil

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	l4g "github.com/alecthomas/log4go"
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/utils"
 )
@@ -358,7 +359,7 @@ func (me *LoadTestProvider) UrlCommand(c *Context, channelId string, message str
 		post.ChannelId = channelId
 		post.UserId = c.Session.UserId
 
-		if _, err := CreatePost(c, post, false); err != nil {
+		if _, err := app.CreatePost(post, c.TeamId, false); err != nil {
 			return &model.CommandResponse{Text: "Unable to create post", ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL}
 		}
 	}
@@ -397,7 +398,7 @@ func (me *LoadTestProvider) JsonCommand(c *Context, channelId string, message st
 		post.Message = message
 	}
 
-	if _, err := CreatePost(c, post, false); err != nil {
+	if _, err := app.CreatePost(post, c.TeamId, false); err != nil {
 		return &model.CommandResponse{Text: "Unable to create post", ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL}
 	}
 	return &model.CommandResponse{Text: "Loaded data", ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL}

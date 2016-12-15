@@ -11,6 +11,7 @@ import (
 
 	l4g "github.com/alecthomas/log4go"
 	"github.com/gorilla/mux"
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/store"
 	"github.com/mattermost/platform/utils"
@@ -348,7 +349,7 @@ func PostUpdateChannelHeaderMessage(c *Context, channelId string, oldChannelHead
 			},
 		}
 
-		if _, err := CreatePost(c, post, false); err != nil {
+		if _, err := app.CreatePost(post, c.TeamId, false); err != nil {
 			l4g.Error(utils.T("api.channel.post_update_channel_header_message_and_forget.join_leave.error"), err)
 		}
 	}
@@ -550,7 +551,7 @@ func PostUserAddRemoveMessage(c *Context, channelId string, message, postType st
 		Type:      postType,
 		UserId:    c.Session.UserId,
 	}
-	if _, err := CreatePost(c, post, false); err != nil {
+	if _, err := app.CreatePost(post, c.TeamId, false); err != nil {
 		l4g.Error(utils.T("api.channel.post_user_add_remove_message_and_forget.error"), err)
 	}
 }
@@ -614,14 +615,6 @@ func JoinDefaultChannels(teamId string, user *model.User, channelRole string) *m
 
 	var err *model.AppError = nil
 
-	fakeContext := &Context{
-		Session: model.Session{
-			UserId: user.Id,
-		},
-		TeamId: teamId,
-		T:      utils.TfuncWithFallback(user.Locale),
-	}
-
 	if result := <-Srv.Store.Channel().GetByName(teamId, "town-square"); result.Err != nil {
 		err = result.Err
 	} else {
@@ -639,7 +632,7 @@ func JoinDefaultChannels(teamId string, user *model.User, channelRole string) *m
 			UserId:    user.Id,
 		}
 
-		if _, err := CreatePost(fakeContext, post, false); err != nil {
+		if _, err := app.CreatePost(post, teamId, false); err != nil {
 			l4g.Error(utils.T("api.channel.post_user_add_remove_message_and_forget.error"), err)
 		}
 
@@ -663,7 +656,7 @@ func JoinDefaultChannels(teamId string, user *model.User, channelRole string) *m
 			UserId:    user.Id,
 		}
 
-		if _, err := CreatePost(fakeContext, post, false); err != nil {
+		if _, err := app.CreatePost(post, teamId, false); err != nil {
 			l4g.Error(utils.T("api.channel.post_user_add_remove_message_and_forget.error"), err)
 		}
 
@@ -826,7 +819,7 @@ func deleteChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 				Type:      model.POST_CHANNEL_DELETED,
 				UserId:    c.Session.UserId,
 			}
-			if _, err := CreatePost(c, post, false); err != nil {
+			if _, err := app.CreatePost(post, c.TeamId, false); err != nil {
 				l4g.Error(utils.T("api.channel.delete_channel.failed_post.error"), err)
 			}
 		}()

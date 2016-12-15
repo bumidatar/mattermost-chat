@@ -16,6 +16,7 @@ import (
 
 	l4g "github.com/alecthomas/log4go"
 	"github.com/mattermost/platform/api"
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/einterfaces"
 	"github.com/mattermost/platform/manualtesting"
 	"github.com/mattermost/platform/model"
@@ -61,8 +62,8 @@ func runServer(configFileLocation string) {
 
 	cmdUpdateDb30()
 
-	api.NewServer()
-	api.InitStores()
+	app.NewServer()
+	app.InitStores()
 	api.InitRouter()
 	api.InitApi()
 	web.InitWeb()
@@ -78,7 +79,7 @@ func runServer(configFileLocation string) {
 
 	resetStatuses()
 
-	api.StartServer()
+	app.StartServer()
 
 	// If we allow testing then listen for manual testing URL hits
 	if utils.Cfg.ServiceSettings.EnableTesting {
@@ -114,7 +115,7 @@ func runServer(configFileLocation string) {
 		einterfaces.GetMetricsInterface().StopServer()
 	}
 
-	api.StopServer()
+	app.StopServer()
 }
 
 func runSecurityAndDiagnosticsJob() {

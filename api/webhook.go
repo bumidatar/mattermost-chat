@@ -10,6 +10,7 @@ import (
 
 	l4g "github.com/alecthomas/log4go"
 	"github.com/gorilla/mux"
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/store"
 	"github.com/mattermost/platform/utils"
@@ -472,7 +473,7 @@ func incomingWebhook(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 	c.Err = nil
 
-	if _, err := CreateWebhookPost(c, channel.Id, text, overrideUsername, overrideIconUrl, parsedRequest.Props, webhookType); err != nil {
+	if _, err := app.CreateWebhookPost(hook.userId, hook.TeamId, channel.Id, text, overrideUsername, overrideIconUrl, parsedRequest.Props, webhookType); err != nil {
 		c.Err = err
 		return
 	}

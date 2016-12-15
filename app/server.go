@@ -46,11 +46,6 @@ func InitStores() {
 	Srv.Store = store.NewSqlStore()
 }
 
-func InitRouter() {
-	Srv.Router = mux.NewRouter()
-	Srv.Router.NotFoundHandler = http.HandlerFunc(Handle404)
-}
-
 type VaryBy struct{}
 
 func (m *VaryBy) Key(r *http.Request) string {

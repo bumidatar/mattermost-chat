@@ -6,6 +6,7 @@ package api
 import (
 	"time"
 
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/store"
 	"github.com/mattermost/platform/utils"
@@ -36,10 +37,10 @@ func SetupEnterprise() *TestHelper {
 		*utils.Cfg.RateLimitSettings.Enable = false
 		utils.DisableDebugLogForTest()
 		utils.License.Features.SetDefaults()
-		NewServer()
+		app.NewServer()
 		InitStores()
 		InitRouter()
-		StartServer()
+		app.StartServer()
 		utils.InitHTML()
 		InitApi()
 		utils.EnableDebugLogForTest()
@@ -59,10 +60,10 @@ func Setup() *TestHelper {
 		utils.Cfg.TeamSettings.MaxUsersPerTeam = 50
 		*utils.Cfg.RateLimitSettings.Enable = false
 		utils.DisableDebugLogForTest()
-		NewServer()
+		app.NewServer()
 		InitStores()
 		InitRouter()
-		StartServer()
+		app.StartServer()
 		InitApi()
 		utils.EnableDebugLogForTest()
 		Srv.Store.MarkSystemRanUnitTests()

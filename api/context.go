@@ -153,9 +153,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		isTokenFromQueryString = true
 	}
 
-	if *utils.Cfg.ServiceSettings.SiteURL != "" {
-		c.SetSiteURL(*utils.Cfg.ServiceSettings.SiteURL)
-	} else {
+	if utils.GetSiteURL() == "" {
 		protocol := GetProtocol(r)
 		c.SetSiteURL(protocol + "://" + r.Host)
 	}

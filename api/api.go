@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/utils"
 
@@ -57,6 +58,11 @@ type Routes struct {
 }
 
 var BaseRoutes *Routes
+
+func InitRouter() {
+	app.Srv.Router = mux.NewRouter()
+	app.Srv.Router.NotFoundHandler = http.HandlerFunc(Handle404)
+}
 
 func InitApi() {
 	BaseRoutes = &Routes{}
