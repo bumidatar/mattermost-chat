@@ -6,6 +6,7 @@ package api
 import (
 	"strconv"
 
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/model"
 )
 
@@ -67,7 +68,7 @@ func setCollapsePreference(c *Context, isCollapse bool) *model.CommandResponse {
 		Value:    strconv.FormatBool(isCollapse),
 	}
 
-	if result := <-Srv.Store.Preference().Save(&model.Preferences{pref}); result.Err != nil {
+	if result := <-app.Srv.Store.Preference().Save(&model.Preferences{pref}); result.Err != nil {
 		return &model.CommandResponse{Text: c.T("api.command_expand_collapse.fail.app_error"), ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL}
 	}
 

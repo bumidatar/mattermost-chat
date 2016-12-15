@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/store"
 )
@@ -106,11 +107,11 @@ func TestCheckPendingNotifications(t *testing.T) {
 		},
 	}
 
-	store.Must(Srv.Store.Status().SaveOrUpdate(&model.Status{
+	store.Must(app.Srv.Store.Status().SaveOrUpdate(&model.Status{
 		UserId:         id1,
 		LastActivityAt: 9999000,
 	}))
-	store.Must(Srv.Store.Preference().Save(&model.Preferences{{
+	store.Must(app.Srv.Store.Preference().Save(&model.Preferences{{
 		UserId:   id1,
 		Category: model.PREFERENCE_CATEGORY_NOTIFICATIONS,
 		Name:     model.PREFERENCE_NAME_EMAIL_INTERVAL,
@@ -125,7 +126,7 @@ func TestCheckPendingNotifications(t *testing.T) {
 	}
 
 	// test that notifications are cleared if the user has acted
-	store.Must(Srv.Store.Status().SaveOrUpdate(&model.Status{
+	store.Must(app.Srv.Store.Status().SaveOrUpdate(&model.Status{
 		UserId:         id1,
 		LastActivityAt: 10001000,
 	}))

@@ -108,7 +108,7 @@ func TestCliCreateUserWithoutTeam(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if result := <-Srv.Store.User().GetByEmail(email); result.Err != nil {
+	if result := <-app.Srv.Store.User().GetByEmail(email); result.Err != nil {
 		t.Fatal()
 	} else {
 		user := result.Data.(*model.User)
@@ -132,7 +132,7 @@ func TestCliAssignRole(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if result := <-Srv.Store.User().GetByEmail(th.BasicUser.Email); result.Err != nil {
+	if result := <-app.Srv.Store.User().GetByEmail(th.BasicUser.Email); result.Err != nil {
 		t.Fatal()
 	} else {
 		user := result.Data.(*model.User)
@@ -370,7 +370,7 @@ func TestCliLeaveTeam(t *testing.T) {
 		t.Fatal("profile should not be on team")
 	}
 
-	if result := <-Srv.Store.Team().GetTeamsByUserId(th.BasicUser.Id); result.Err != nil {
+	if result := <-app.Srv.Store.Team().GetTeamsByUserId(th.BasicUser.Id); result.Err != nil {
 		teamMembers := result.Data.([]*model.TeamMember)
 		if len(teamMembers) > 0 {
 			t.Fatal("Shouldn't be in team")

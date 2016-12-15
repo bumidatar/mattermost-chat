@@ -10,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	l4g "github.com/alecthomas/log4go"
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/utils"
 )
@@ -31,7 +32,7 @@ func ImportPost(post *model.Post) {
 
 		post.Hashtags, _ = model.ParseHashtags(post.Message)
 
-		if result := <-Srv.Store.Post().Save(post); result.Err != nil {
+		if result := <-app.Srv.Store.Post().Save(post); result.Err != nil {
 			l4g.Debug(utils.T("api.import.import_post.saving.debug"), post.UserId, post.Message)
 		}
 
@@ -44,13 +45,13 @@ func ImportPost(post *model.Post) {
 func ImportUser(team *model.Team, user *model.User) *model.User {
 	user.MakeNonNil()
 
-	if result := <-Srv.Store.User().Save(user); result.Err != nil {
+	if result := <-app.Srv.Store.User().Save(user); result.Err != nil {
 		l4g.Error(utils.T("api.import.import_user.saving.error"), result.Err)
 		return nil
 	} else {
 		ruser := result.Data.(*model.User)
 
-		if cresult := <-Srv.Store.User().VerifyEmail(ruser.Id); cresult.Err != nil {
+		if cresult := <-app.Srv.Store.User().VerifyEmail(ruser.Id); cresult.Err != nil {
 			l4g.Error(utils.T("api.import.import_user.set_email.error"), cresult.Err)
 		}
 
@@ -63,7 +64,7 @@ func ImportUser(team *model.Team, user *model.User) *model.User {
 }
 
 func ImportChannel(channel *model.Channel) *model.Channel {
-	if result := <-Srv.Store.Channel().Save(channel); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().Save(channel); result.Err != nil {
 		return nil
 	} else {
 		sc := result.Data.(*model.Channel)

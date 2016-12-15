@@ -15,6 +15,7 @@ import (
 
 	l4g "github.com/alecthomas/log4go"
 	"github.com/gorilla/mux"
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/einterfaces"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/store"
@@ -105,7 +106,7 @@ func getClusterStatus(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func getAllAudits(c *Context, w http.ResponseWriter, r *http.Request) {
-	if result := <-Srv.Store.Audit().Get("", 200); result.Err != nil {
+	if result := <-app.Srv.Store.Audit().Get("", 200); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -221,10 +222,10 @@ func saveConfig(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func recycleDatabaseConnection(c *Context, w http.ResponseWriter, r *http.Request) {
-	oldStore := Srv.Store
+	oldStore := app.Srv.Store
 
 	l4g.Warn(utils.T("api.admin.recycle_db_start.warn"))
-	Srv.Store = store.NewSqlStore()
+	app.Srv.Store = store.NewSqlStore()
 
 	time.Sleep(20 * time.Second)
 	oldStore.Close()
@@ -260,7 +261,7 @@ func testEmail(c *Context, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if result := <-Srv.Store.User().Get(c.Session.UserId); result.Err != nil {
+	if result := <-app.Srv.Store.User().Get(c.Session.UserId); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -281,7 +282,7 @@ func getComplianceReports(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Compliance().GetAll(); result.Err != nil {
+	if result := <-app.Srv.Store.Compliance().GetAll(); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -305,7 +306,7 @@ func saveComplianceReport(c *Context, w http.ResponseWriter, r *http.Request) {
 	job.UserId = c.Session.UserId
 	job.Type = model.COMPLIANCE_TYPE_ADHOC
 
-	if result := <-Srv.Store.Compliance().Save(job); result.Err != nil {
+	if result := <-app.Srv.Store.Compliance().Save(job); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -330,7 +331,7 @@ func downloadComplianceReport(c *Context, w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if result := <-Srv.Store.Compliance().Get(id); result.Err != nil {
+	if result := <-app.Srv.Store.Compliance().Get(id); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -377,11 +378,11 @@ func getAnalytics(c *Context, w http.ResponseWriter, r *http.Request) {
 		rows[6] = &model.AnalyticsRow{"total_master_db_connections", 0}
 		rows[7] = &model.AnalyticsRow{"total_read_db_connections", 0}
 
-		openChan := Srv.Store.Channel().AnalyticsTypeCount(teamId, model.CHANNEL_OPEN)
-		privateChan := Srv.Store.Channel().AnalyticsTypeCount(teamId, model.CHANNEL_PRIVATE)
-		postChan := Srv.Store.Post().AnalyticsPostCount(teamId, false, false)
-		userChan := Srv.Store.User().AnalyticsUniqueUserCount(teamId)
-		teamChan := Srv.Store.Team().AnalyticsTeamCount()
+		openChan := app.Srv.Store.Channel().AnalyticsTypeCount(teamId, model.CHANNEL_OPEN)
+		privateChan := app.Srv.Store.Channel().AnalyticsTypeCount(teamId, model.CHANNEL_PRIVATE)
+		postChan := app.Srv.Store.Post().AnalyticsPostCount(teamId, false, false)
+		userChan := app.Srv.Store.User().AnalyticsUniqueUserCount(teamId)
+		teamChan := app.Srv.Store.Team().AnalyticsTeamCount()
 
 		if r := <-openChan; r.Err != nil {
 			c.Err = r.Err
@@ -427,8 +428,8 @@ func getAnalytics(c *Context, w http.ResponseWriter, r *http.Request) {
 			}
 
 			totalSockets := TotalWebsocketConnections()
-			totalMasterDb := Srv.Store.TotalMasterDbConnections()
-			totalReadDb := Srv.Store.TotalReadDbConnections()
+			totalMasterDb := app.Srv.Store.TotalMasterDbConnections()
+			totalReadDb := app.Srv.Store.TotalReadDbConnections()
 
 			for _, stat := range stats {
 				totalSockets = totalSockets + stat.TotalWebsocketConnections
@@ -442,20 +443,20 @@ func getAnalytics(c *Context, w http.ResponseWriter, r *http.Request) {
 
 		} else {
 			rows[5].Value = float64(TotalWebsocketConnections())
-			rows[6].Value = float64(Srv.Store.TotalMasterDbConnections())
-			rows[7].Value = float64(Srv.Store.TotalReadDbConnections())
+			rows[6].Value = float64(app.Srv.Store.TotalMasterDbConnections())
+			rows[7].Value = float64(app.Srv.Store.TotalReadDbConnections())
 		}
 
 		w.Write([]byte(rows.ToJson()))
 	} else if name == "post_counts_day" {
-		if r := <-Srv.Store.Post().AnalyticsPostCountsByDay(teamId); r.Err != nil {
+		if r := <-app.Srv.Store.Post().AnalyticsPostCountsByDay(teamId); r.Err != nil {
 			c.Err = r.Err
 			return
 		} else {
 			w.Write([]byte(r.Data.(model.AnalyticsRows).ToJson()))
 		}
 	} else if name == "user_counts_with_posts_day" {
-		if r := <-Srv.Store.Post().AnalyticsUserCountsWithPostsByDay(teamId); r.Err != nil {
+		if r := <-app.Srv.Store.Post().AnalyticsUserCountsWithPostsByDay(teamId); r.Err != nil {
 			c.Err = r.Err
 			return
 		} else {
@@ -470,12 +471,12 @@ func getAnalytics(c *Context, w http.ResponseWriter, r *http.Request) {
 		rows[4] = &model.AnalyticsRow{"command_count", 0}
 		rows[5] = &model.AnalyticsRow{"session_count", 0}
 
-		fileChan := Srv.Store.Post().AnalyticsPostCount(teamId, true, false)
-		hashtagChan := Srv.Store.Post().AnalyticsPostCount(teamId, false, true)
-		iHookChan := Srv.Store.Webhook().AnalyticsIncomingCount(teamId)
-		oHookChan := Srv.Store.Webhook().AnalyticsOutgoingCount(teamId)
-		commandChan := Srv.Store.Command().AnalyticsCommandCount(teamId)
-		sessionChan := Srv.Store.Session().AnalyticsSessionCount()
+		fileChan := app.Srv.Store.Post().AnalyticsPostCount(teamId, true, false)
+		hashtagChan := app.Srv.Store.Post().AnalyticsPostCount(teamId, false, true)
+		iHookChan := app.Srv.Store.Webhook().AnalyticsIncomingCount(teamId)
+		oHookChan := app.Srv.Store.Webhook().AnalyticsOutgoingCount(teamId)
+		commandChan := app.Srv.Store.Command().AnalyticsCommandCount(teamId)
+		sessionChan := app.Srv.Store.Session().AnalyticsSessionCount()
 
 		if r := <-fileChan; r.Err != nil {
 			c.Err = r.Err
@@ -766,7 +767,7 @@ func samlCertificateStatus(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func getRecentlyActiveUsers(c *Context, w http.ResponseWriter, r *http.Request) {
-	if result := <-Srv.Store.User().GetRecentlyActiveUsersForTeam(c.TeamId); result.Err != nil {
+	if result := <-app.Srv.Store.User().GetRecentlyActiveUsersForTeam(c.TeamId); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {

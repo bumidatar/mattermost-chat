@@ -8,6 +8,7 @@ import (
 
 	l4g "github.com/alecthomas/log4go"
 
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/einterfaces"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/store"
@@ -63,7 +64,7 @@ func getStatusesWebSocket(req *model.WebSocketRequest) (map[string]interface{}, 
 
 // Only returns 300 statuses max
 func GetAllStatuses() (map[string]interface{}, *model.AppError) {
-	if result := <-Srv.Store.Status().GetOnlineAway(); result.Err != nil {
+	if result := <-app.Srv.Store.Status().GetOnlineAway(); result.Err != nil {
 		return nil, result.Err
 	} else {
 		statuses := result.Data.([]*model.Status)
@@ -122,7 +123,7 @@ func GetStatusesByIds(userIds []string) (map[string]interface{}, *model.AppError
 	}
 
 	if len(missingUserIds) > 0 {
-		if result := <-Srv.Store.Status().GetByIds(missingUserIds); result.Err != nil {
+		if result := <-app.Srv.Store.Status().GetByIds(missingUserIds); result.Err != nil {
 			return nil, result.Err
 		} else {
 			statuses := result.Data.([]*model.Status)
@@ -179,13 +180,13 @@ func SetStatusOnline(userId string, sessionId string, manual bool) {
 	// Only update the database if the status has changed, the status has been manually set,
 	// or enough time has passed since the previous action
 	if status.Status != oldStatus || status.Manual != oldManual || status.LastActivityAt-oldTime > model.STATUS_MIN_UPDATE_TIME {
-		achan := Srv.Store.Session().UpdateLastActivityAt(sessionId, status.LastActivityAt)
+		achan := app.Srv.Store.Session().UpdateLastActivityAt(sessionId, status.LastActivityAt)
 
 		var schan store.StoreChannel
 		if broadcast {
-			schan = Srv.Store.Status().SaveOrUpdate(status)
+			schan = app.Srv.Store.Status().SaveOrUpdate(status)
 		} else {
-			schan = Srv.Store.Status().UpdateLastActivityAt(status.UserId, status.LastActivityAt)
+			schan = app.Srv.Store.Status().UpdateLastActivityAt(status.UserId, status.LastActivityAt)
 		}
 
 		if result := <-achan; result.Err != nil {
@@ -215,7 +216,7 @@ func SetStatusOffline(userId string, manual bool) {
 
 	AddStatusCache(status)
 
-	if result := <-Srv.Store.Status().SaveOrUpdate(status); result.Err != nil {
+	if result := <-app.Srv.Store.Status().SaveOrUpdate(status); result.Err != nil {
 		l4g.Error(utils.T("api.status.save_status.error"), userId, result.Err)
 	}
 
@@ -252,7 +253,7 @@ func SetStatusAwayIfNeeded(userId string, manual bool) {
 
 	AddStatusCache(status)
 
-	if result := <-Srv.Store.Status().SaveOrUpdate(status); result.Err != nil {
+	if result := <-app.Srv.Store.Status().SaveOrUpdate(status); result.Err != nil {
 		l4g.Error(utils.T("api.status.save_status.error"), userId, result.Err)
 	}
 
@@ -270,7 +271,7 @@ func GetStatus(userId string) (*model.Status, *model.AppError) {
 		return statusCopy, nil
 	}
 
-	if result := <-Srv.Store.Status().Get(userId); result.Err != nil {
+	if result := <-app.Srv.Store.Status().Get(userId); result.Err != nil {
 		return nil, result.Err
 	} else {
 		return result.Data.(*model.Status), nil
@@ -331,7 +332,7 @@ func SetActiveChannel(userId string, channelId string) *model.AppError {
 
 	AddStatusCache(status)
 
-	if result := <-Srv.Store.Status().SaveOrUpdate(status); result.Err != nil {
+	if result := <-app.Srv.Store.Status().SaveOrUpdate(status); result.Err != nil {
 		return result.Err
 	}
 

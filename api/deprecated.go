@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	l4g "github.com/alecthomas/log4go"
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/utils"
 )
@@ -26,7 +27,7 @@ func getMoreChannels(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Channel().GetMoreChannels(c.TeamId, c.Session.UserId, 0, 100000); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().GetMoreChannels(c.TeamId, c.Session.UserId, 0, 100000); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else if HandleEtag(result.Data.(*model.ChannelList).Etag(), w, r) {

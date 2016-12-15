@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/store"
 	"github.com/mattermost/platform/utils"
@@ -89,7 +90,7 @@ func TestCreateTeam(t *testing.T) {
 	user := &model.User{Email: model.NewId() + "success+test@simulator.amazonses.com", Nickname: "Corey Hulen", Password: "passwd1"}
 	user = Client.Must(Client.CreateUser(user, "")).Data.(*model.User)
 	LinkUserToTeam(user, rteam.Data.(*model.Team))
-	store.Must(Srv.Store.User().VerifyEmail(user.Id))
+	store.Must(app.Srv.Store.User().VerifyEmail(user.Id))
 
 	Client.Login(user.Email, "passwd1")
 	Client.SetTeamId(rteam.Data.(*model.Team).Id)
@@ -266,7 +267,7 @@ func TestGetAllTeams(t *testing.T) {
 	user := &model.User{Email: model.NewId() + "success+test@simulator.amazonses.com", Nickname: "Corey Hulen", Password: "passwd1"}
 	user = Client.Must(Client.CreateUser(user, "")).Data.(*model.User)
 	LinkUserToTeam(user, team)
-	store.Must(Srv.Store.User().VerifyEmail(user.Id))
+	store.Must(app.Srv.Store.User().VerifyEmail(user.Id))
 
 	Client.Login(user.Email, "passwd1")
 	Client.SetTeamId(team.Id)
@@ -299,7 +300,7 @@ func TestGetAllTeamListings(t *testing.T) {
 	user := &model.User{Email: model.NewId() + "success+test@simulator.amazonses.com", Nickname: "Corey Hulen", Password: "passwd1"}
 	user = Client.Must(Client.CreateUser(user, "")).Data.(*model.User)
 	LinkUserToTeam(user, team)
-	store.Must(Srv.Store.User().VerifyEmail(user.Id))
+	store.Must(app.Srv.Store.User().VerifyEmail(user.Id))
 
 	Client.Login(user.Email, "passwd1")
 	Client.SetTeamId(team.Id)
@@ -345,7 +346,7 @@ func TestTeamPermDelete(t *testing.T) {
 	user1 := &model.User{Email: model.NewId() + "success+test@simulator.amazonses.com", Nickname: "Corey Hulen", Password: "passwd1"}
 	user1 = Client.Must(Client.CreateUser(user1, "")).Data.(*model.User)
 	LinkUserToTeam(user1, team)
-	store.Must(Srv.Store.User().VerifyEmail(user1.Id))
+	store.Must(app.Srv.Store.User().VerifyEmail(user1.Id))
 
 	Client.Login(user1.Email, "passwd1")
 	Client.SetTeamId(team.Id)
@@ -389,7 +390,7 @@ func TestInviteMembers(t *testing.T) {
 	user := &model.User{Email: model.NewId() + "success+test@simulator.amazonses.com", Nickname: "Corey Hulen", Password: "passwd1"}
 	user = Client.Must(Client.CreateUser(user, "")).Data.(*model.User)
 	LinkUserToTeam(user, team)
-	store.Must(Srv.Store.User().VerifyEmail(user.Id))
+	store.Must(app.Srv.Store.User().VerifyEmail(user.Id))
 
 	Client.Login(user.Email, "passwd1")
 	Client.SetTeamId(team.Id)
@@ -473,12 +474,12 @@ func TestUpdateTeamDisplayName(t *testing.T) {
 	user := &model.User{Email: team.Email, Nickname: "Corey Hulen", Password: "passwd1"}
 	user = Client.Must(Client.CreateUser(user, "")).Data.(*model.User)
 	LinkUserToTeam(user, team)
-	store.Must(Srv.Store.User().VerifyEmail(user.Id))
+	store.Must(app.Srv.Store.User().VerifyEmail(user.Id))
 
 	user2 := &model.User{Email: "success+" + model.NewId() + "@simulator.amazonses.com", Nickname: "Corey Hulen", Password: "passwd1"}
 	user2 = Client.Must(Client.CreateUser(user2, "")).Data.(*model.User)
 	LinkUserToTeam(user2, team)
-	store.Must(Srv.Store.User().VerifyEmail(user2.Id))
+	store.Must(app.Srv.Store.User().VerifyEmail(user2.Id))
 
 	Client.Login(user2.Email, "passwd1")
 	Client.SetTeamId(team.Id)
@@ -539,7 +540,7 @@ func TestGetMyTeam(t *testing.T) {
 	user := model.User{Email: "success+" + model.NewId() + "@simulator.amazonses.com", Nickname: "Corey Hulen", Password: "passwd1"}
 	ruser, _ := Client.CreateUser(&user, "")
 	LinkUserToTeam(ruser.Data.(*model.User), rteam.Data.(*model.Team))
-	store.Must(Srv.Store.User().VerifyEmail(ruser.Data.(*model.User).Id))
+	store.Must(app.Srv.Store.User().VerifyEmail(ruser.Data.(*model.User).Id))
 
 	Client.Login(user.Email, user.Password)
 	Client.SetTeamId(team.Id)
@@ -753,7 +754,7 @@ func TestGetTeamStats(t *testing.T) {
 
 	user := model.User{Email: "success+" + model.NewId() + "@simulator.amazonses.com", Nickname: "Corey Hulen", Password: "passwd1"}
 	ruser, _ := Client.CreateUser(&user, "")
-	store.Must(Srv.Store.User().VerifyEmail(ruser.Data.(*model.User).Id))
+	store.Must(app.Srv.Store.User().VerifyEmail(ruser.Data.(*model.User).Id))
 
 	Client.Login(user.Email, user.Password)
 
@@ -773,12 +774,12 @@ func TestUpdateTeamDescription(t *testing.T) {
 	user := &model.User{Email: team.Email, Nickname: "My Testing", Password: "passwd1"}
 	user = Client.Must(Client.CreateUser(user, "")).Data.(*model.User)
 	LinkUserToTeam(user, team)
-	store.Must(Srv.Store.User().VerifyEmail(user.Id))
+	store.Must(app.Srv.Store.User().VerifyEmail(user.Id))
 
 	user2 := &model.User{Email: "success+" + model.NewId() + "@simulator.amazonses.com", Nickname: "Jabba the Hutt", Password: "passwd1"}
 	user2 = Client.Must(Client.CreateUser(user2, "")).Data.(*model.User)
 	LinkUserToTeam(user2, team)
-	store.Must(Srv.Store.User().VerifyEmail(user2.Id))
+	store.Must(app.Srv.Store.User().VerifyEmail(user2.Id))
 
 	Client.Login(user2.Email, "passwd1")
 	Client.SetTeamId(team.Id)
@@ -816,7 +817,7 @@ func TestGetTeamByName(t *testing.T) {
 	user := &model.User{Email: team.Email, Nickname: "My Testing", Password: "passwd1"}
 	user = Client.Must(Client.CreateUser(user, "")).Data.(*model.User)
 	LinkUserToTeam(user, team)
-	store.Must(Srv.Store.User().VerifyEmail(user.Id))
+	store.Must(app.Srv.Store.User().VerifyEmail(user.Id))
 
 	Client.Login(user.Email, "passwd1")
 	if _, err := Client.GetTeamByName(team.Name); err != nil {
@@ -835,7 +836,7 @@ func TestGetTeamByName(t *testing.T) {
 
 	user2 := &model.User{Email: "success+" + model.NewId() + "@simulator.amazonses.com", Nickname: "Jabba the Hutt", Password: "passwd1"}
 	user2 = Client.Must(Client.CreateUser(user2, "")).Data.(*model.User)
-	store.Must(Srv.Store.User().VerifyEmail(user2.Id))
+	store.Must(app.Srv.Store.User().VerifyEmail(user2.Id))
 
 	Client.Login(user2.Email, "passwd1")
 

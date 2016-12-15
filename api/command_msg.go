@@ -50,7 +50,7 @@ func (me *msgProvider) DoCommand(c *Context, args *model.CommandArgs, message st
 
 	// FIX ME
 	// Why isn't this selecting by username since we have that?
-	if profileList := <-Srv.Store.User().GetAll(); profileList.Err != nil {
+	if profileList := <-app.Srv.Store.User().GetAll(); profileList.Err != nil {
 		c.Err = profileList.Err
 		return &model.CommandResponse{Text: c.T("api.command_msg.list.app_error"), ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL}
 	} else {
@@ -66,7 +66,7 @@ func (me *msgProvider) DoCommand(c *Context, args *model.CommandArgs, message st
 				// Find the channel based on this user
 				channelName := model.GetDMNameFromIds(c.Session.UserId, userProfile.Id)
 
-				if channel := <-Srv.Store.Channel().GetByName(c.TeamId, channelName); channel.Err != nil {
+				if channel := <-app.Srv.Store.Channel().GetByName(c.TeamId, channelName); channel.Err != nil {
 					if channel.Err.Id == "store.sql_channel.get_by_name.missing.app_error" {
 						if directChannel, err := CreateDirectChannel(c.Session.UserId, userProfile.Id); err != nil {
 							c.Err = err

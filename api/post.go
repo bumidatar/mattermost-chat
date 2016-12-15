@@ -62,7 +62,7 @@ func createPost(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 	post.UserId = c.Session.UserId
 
-	cchan := Srv.Store.Channel().Get(post.ChannelId)
+	cchan := app.Srv.Store.Channel().Get(post.ChannelId)
 
 	if !HasPermissionToChannelContext(c, post.ChannelId, model.PERMISSION_CREATE_POST) {
 		return
@@ -100,7 +100,7 @@ func createPost(c *Context, w http.ResponseWriter, r *http.Request) {
 	} else {
 		// Update the LastViewAt only if the post does not have from_webhook prop set (eg. Zapier app)
 		if _, ok := post.Props["from_webhook"]; !ok {
-			if result := <-Srv.Store.Channel().UpdateLastViewedAt(post.ChannelId, c.Session.UserId); result.Err != nil {
+			if result := <-app.Srv.Store.Channel().UpdateLastViewedAt(post.ChannelId, c.Session.UserId); result.Err != nil {
 				l4g.Error(utils.T("api.post.create_post.last_viewed.error"), post.ChannelId, c.Session.UserId, result.Err)
 			}
 		}
@@ -111,7 +111,7 @@ func createPost(c *Context, w http.ResponseWriter, r *http.Request) {
 
 func makeDirectChannelVisible(channelId string) {
 	var members []model.ChannelMember
-	if result := <-Srv.Store.Channel().GetMembers(channelId); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().GetMembers(channelId); result.Err != nil {
 		l4g.Error(utils.T("api.post.make_direct_channel_visible.get_members.error"), channelId, result.Err.Message)
 		return
 	} else {
@@ -127,7 +127,7 @@ func makeDirectChannelVisible(channelId string) {
 	for i, member := range members {
 		otherUserId := members[1-i].UserId
 
-		if result := <-Srv.Store.Preference().Get(member.UserId, model.PREFERENCE_CATEGORY_DIRECT_CHANNEL_SHOW, otherUserId); result.Err != nil {
+		if result := <-app.Srv.Store.Preference().Get(member.UserId, model.PREFERENCE_CATEGORY_DIRECT_CHANNEL_SHOW, otherUserId); result.Err != nil {
 			// create a new preference since one doesn't exist yet
 			preference := &model.Preference{
 				UserId:   member.UserId,
@@ -136,7 +136,7 @@ func makeDirectChannelVisible(channelId string) {
 				Value:    "true",
 			}
 
-			if saveResult := <-Srv.Store.Preference().Save(&model.Preferences{*preference}); saveResult.Err != nil {
+			if saveResult := <-app.Srv.Store.Preference().Save(&model.Preferences{*preference}); saveResult.Err != nil {
 				l4g.Error(utils.T("api.post.make_direct_channel_visible.save_pref.error"), member.UserId, otherUserId, saveResult.Err.Message)
 			} else {
 				message := model.NewWebSocketEvent(model.WEBSOCKET_EVENT_PREFERENCE_CHANGED, "", "", member.UserId, nil)
@@ -151,7 +151,7 @@ func makeDirectChannelVisible(channelId string) {
 				// update the existing preference to make the channel visible
 				preference.Value = "true"
 
-				if updateResult := <-Srv.Store.Preference().Save(&model.Preferences{preference}); updateResult.Err != nil {
+				if updateResult := <-app.Srv.Store.Preference().Save(&model.Preferences{preference}); updateResult.Err != nil {
 					l4g.Error(utils.T("api.post.make_direct_channel_visible.update_pref.error"), member.UserId, otherUserId, updateResult.Err.Message)
 				} else {
 					message := model.NewWebSocketEvent(model.WEBSOCKET_EVENT_PREFERENCE_CHANGED, "", "", member.UserId, nil)
@@ -172,7 +172,7 @@ func updatePost(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pchan := Srv.Store.Post().Get(post.Id)
+	pchan := app.Srv.Store.Post().Get(post.Id)
 
 	if !HasPermissionToChannelContext(c, post.ChannelId, model.PERMISSION_EDIT_POST) {
 		return
@@ -217,7 +217,7 @@ func updatePost(c *Context, w http.ResponseWriter, r *http.Request) {
 	newPost.Message = post.Message
 	newPost.Hashtags, _ = model.ParseHashtags(post.Message)
 
-	if result := <-Srv.Store.Post().Update(newPost, oldPost); result.Err != nil {
+	if result := <-app.Srv.Store.Post().Update(newPost, oldPost); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -251,7 +251,7 @@ func getFlaggedPosts(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	posts := &model.PostList{}
 
-	if result := <-Srv.Store.Post().GetFlaggedPosts(c.Session.UserId, offset, limit); result.Err != nil {
+	if result := <-app.Srv.Store.Post().GetFlaggedPosts(c.Session.UserId, offset, limit); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -282,7 +282,7 @@ func getPosts(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	etagChan := Srv.Store.Post().GetEtag(id, true)
+	etagChan := app.Srv.Store.Post().GetEtag(id, true)
 
 	if !HasPermissionToChannelContext(c, id, model.PERMISSION_CREATE_POST) {
 		return
@@ -294,7 +294,7 @@ func getPosts(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pchan := Srv.Store.Post().GetPosts(id, offset, limit)
+	pchan := app.Srv.Store.Post().GetPosts(id, offset, limit)
 
 	if result := <-pchan; result.Err != nil {
 		c.Err = result.Err
@@ -323,7 +323,7 @@ func getPostsSince(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pchan := Srv.Store.Post().GetPostsSince(id, time)
+	pchan := app.Srv.Store.Post().GetPostsSince(id, time)
 
 	if !HasPermissionToChannelContext(c, id, model.PERMISSION_READ_CHANNEL) {
 		return
@@ -355,7 +355,7 @@ func getPost(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pchan := Srv.Store.Post().Get(postId)
+	pchan := app.Srv.Store.Post().Get(postId)
 
 	if !HasPermissionToChannelContext(c, channelId, model.PERMISSION_READ_CHANNEL) {
 		return
@@ -389,7 +389,7 @@ func getPostById(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Post().Get(postId); result.Err != nil {
+	if result := <-app.Srv.Store.Post().Get(postId); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -423,7 +423,7 @@ func getPermalinkTmp(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Post().Get(postId); result.Err != nil {
+	if result := <-app.Srv.Store.Post().Get(postId); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -474,7 +474,7 @@ func deletePost(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pchan := Srv.Store.Post().Get(postId)
+	pchan := app.Srv.Store.Post().Get(postId)
 
 	if result := <-pchan; result.Err != nil {
 		c.Err = result.Err
@@ -500,7 +500,7 @@ func deletePost(c *Context, w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if dresult := <-Srv.Store.Post().Delete(postId, model.GetMillis()); dresult.Err != nil {
+		if dresult := <-app.Srv.Store.Post().Delete(postId, model.GetMillis()); dresult.Err != nil {
 			c.Err = dresult.Err
 			return
 		}
@@ -521,7 +521,7 @@ func deletePost(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteFlaggedPost(userId string, post *model.Post) {
-	if result := <-Srv.Store.Preference().Delete(userId, model.PREFERENCE_CATEGORY_FLAGGED_POST, post.Id); result.Err != nil {
+	if result := <-app.Srv.Store.Preference().Delete(userId, model.PREFERENCE_CATEGORY_FLAGGED_POST, post.Id); result.Err != nil {
 		l4g.Warn(utils.T("api.post.delete_flagged_post.app_error.warn"), result.Err)
 		return
 	}
@@ -532,7 +532,7 @@ func DeletePostFiles(post *model.Post) {
 		return
 	}
 
-	if result := <-Srv.Store.FileInfo().DeleteForPost(post.Id); result.Err != nil {
+	if result := <-app.Srv.Store.FileInfo().DeleteForPost(post.Id); result.Err != nil {
 		l4g.Warn(utils.T("api.post.delete_post_files.app_error.warn"), post.Id, result.Err)
 	}
 }
@@ -573,7 +573,7 @@ func getPostsBeforeOrAfter(c *Context, w http.ResponseWriter, r *http.Request, b
 	}
 
 	// We can do better than this etag in this situation
-	etagChan := Srv.Store.Post().GetEtag(id, true)
+	etagChan := app.Srv.Store.Post().GetEtag(id, true)
 
 	if !HasPermissionToChannelContext(c, id, model.PERMISSION_READ_CHANNEL) {
 		return
@@ -586,9 +586,9 @@ func getPostsBeforeOrAfter(c *Context, w http.ResponseWriter, r *http.Request, b
 
 	var pchan store.StoreChannel
 	if before {
-		pchan = Srv.Store.Post().GetPostsBefore(id, postId, numPosts, offset)
+		pchan = app.Srv.Store.Post().GetPostsBefore(id, postId, numPosts, offset)
 	} else {
-		pchan = Srv.Store.Post().GetPostsAfter(id, postId, numPosts, offset)
+		pchan = app.Srv.Store.Post().GetPostsAfter(id, postId, numPosts, offset)
 	}
 
 	if result := <-pchan; result.Err != nil {
@@ -623,7 +623,7 @@ func searchPosts(c *Context, w http.ResponseWriter, r *http.Request) {
 		params.OrTerms = isOrSearch
 		// don't allow users to search for everything
 		if params.Terms != "*" {
-			channels = append(channels, Srv.Store.Post().Search(c.TeamId, c.Session.UserId, params))
+			channels = append(channels, app.Srv.Store.Post().Search(c.TeamId, c.Session.UserId, params))
 		}
 	}
 
@@ -657,8 +657,8 @@ func getFileInfosForPost(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pchan := Srv.Store.Post().Get(postId)
-	fchan := Srv.Store.FileInfo().GetForPost(postId)
+	pchan := app.Srv.Store.Post().Get(postId)
+	fchan := app.Srv.Store.FileInfo().GetForPost(postId)
 
 	if !HasPermissionToChannelContext(c, channelId, model.PERMISSION_READ_CHANNEL) {
 		return

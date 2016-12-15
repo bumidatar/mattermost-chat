@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/utils"
 
@@ -124,8 +125,8 @@ func (job *EmailBatchingJob) handleNewNotifications() {
 func (job *EmailBatchingJob) checkPendingNotifications(now time.Time, handler func(string, []*batchedNotification)) {
 	// look for users who've acted since pending posts were received
 	for userId, notifications := range job.pendingNotifications {
-		schan := Srv.Store.Status().Get(userId)
-		pchan := Srv.Store.Preference().Get(userId, model.PREFERENCE_CATEGORY_NOTIFICATIONS, model.PREFERENCE_NAME_EMAIL_INTERVAL)
+		schan := app.Srv.Store.Status().Get(userId)
+		pchan := app.Srv.Store.Preference().Get(userId, model.PREFERENCE_CATEGORY_NOTIFICATIONS, model.PREFERENCE_NAME_EMAIL_INTERVAL)
 		batchStartTime := notifications[0].post.CreateAt
 
 		// check if the user has been active and would've seen any new posts
@@ -162,8 +163,8 @@ func (job *EmailBatchingJob) checkPendingNotifications(now time.Time, handler fu
 }
 
 func sendBatchedEmailNotification(userId string, notifications []*batchedNotification) {
-	uchan := Srv.Store.User().Get(userId)
-	pchan := Srv.Store.Preference().Get(userId, model.PREFERENCE_CATEGORY_DISPLAY_SETTINGS, model.PREFERENCE_NAME_DISPLAY_NAME_FORMAT)
+	uchan := app.Srv.Store.User().Get(userId)
+	pchan := app.Srv.Store.Preference().Get(userId, model.PREFERENCE_CATEGORY_DISPLAY_SETTINGS, model.PREFERENCE_NAME_DISPLAY_NAME_FORMAT)
 
 	var user *model.User
 	if result := <-uchan; result.Err != nil {
@@ -213,8 +214,8 @@ func sendBatchedEmailNotification(userId string, notifications []*batchedNotific
 }
 
 func renderBatchedPost(template *utils.HTMLTemplate, post *model.Post, teamName string, displayNameFormat string, translateFunc i18n.TranslateFunc) string {
-	schan := Srv.Store.User().Get(post.UserId)
-	cchan := Srv.Store.Channel().Get(post.ChannelId)
+	schan := app.Srv.Store.User().Get(post.UserId)
+	cchan := app.Srv.Store.Channel().Get(post.ChannelId)
 
 	template.Props["Button"] = translateFunc("api.email_batching.render_batched_post.go_to_post")
 	template.Props["PostMessage"] = getMessageForNotification(post, translateFunc)

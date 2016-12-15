@@ -70,7 +70,7 @@ func listCommands(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	if *utils.Cfg.ServiceSettings.EnableCommands {
-		if result := <-Srv.Store.Command().GetByTeam(c.TeamId); result.Err != nil {
+		if result := <-app.Srv.Store.Command().GetByTeam(c.TeamId); result.Err != nil {
 			c.Err = result.Err
 			return
 		} else {
@@ -120,11 +120,11 @@ func executeCommand(c *Context, w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		chanChan := Srv.Store.Channel().Get(commandArgs.ChannelId)
-		teamChan := Srv.Store.Team().Get(c.TeamId)
-		userChan := Srv.Store.User().Get(c.Session.UserId)
+		chanChan := app.Srv.Store.Channel().Get(commandArgs.ChannelId)
+		teamChan := app.Srv.Store.Team().Get(c.TeamId)
+		userChan := app.Srv.Store.User().Get(c.Session.UserId)
 
-		if result := <-Srv.Store.Command().GetByTeam(c.TeamId); result.Err != nil {
+		if result := <-app.Srv.Store.Command().GetByTeam(c.TeamId); result.Err != nil {
 			c.Err = result.Err
 			return
 		} else {
@@ -295,7 +295,7 @@ func createCommand(c *Context, w http.ResponseWriter, r *http.Request) {
 	cmd.CreatorId = c.Session.UserId
 	cmd.TeamId = c.TeamId
 
-	if result := <-Srv.Store.Command().GetByTeam(c.TeamId); result.Err != nil {
+	if result := <-app.Srv.Store.Command().GetByTeam(c.TeamId); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -315,7 +315,7 @@ func createCommand(c *Context, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if result := <-Srv.Store.Command().Save(cmd); result.Err != nil {
+	if result := <-app.Srv.Store.Command().Save(cmd); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -350,7 +350,7 @@ func updateCommand(c *Context, w http.ResponseWriter, r *http.Request) {
 	cmd.Trigger = strings.ToLower(cmd.Trigger)
 
 	var oldCmd *model.Command
-	if result := <-Srv.Store.Command().Get(cmd.Id); result.Err != nil {
+	if result := <-app.Srv.Store.Command().Get(cmd.Id); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -376,7 +376,7 @@ func updateCommand(c *Context, w http.ResponseWriter, r *http.Request) {
 		cmd.TeamId = oldCmd.TeamId
 	}
 
-	if result := <-Srv.Store.Command().Update(cmd); result.Err != nil {
+	if result := <-app.Srv.Store.Command().Update(cmd); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -397,7 +397,7 @@ func listTeamCommands(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Command().GetByTeam(c.TeamId); result.Err != nil {
+	if result := <-app.Srv.Store.Command().GetByTeam(c.TeamId); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -430,7 +430,7 @@ func regenCommandToken(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	var cmd *model.Command
-	if result := <-Srv.Store.Command().Get(id); result.Err != nil {
+	if result := <-app.Srv.Store.Command().Get(id); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -445,7 +445,7 @@ func regenCommandToken(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	cmd.Token = model.NewId()
 
-	if result := <-Srv.Store.Command().Update(cmd); result.Err != nil {
+	if result := <-app.Srv.Store.Command().Update(cmd); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -476,7 +476,7 @@ func deleteCommand(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Command().Get(id); result.Err != nil {
+	if result := <-app.Srv.Store.Command().Get(id); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -487,7 +487,7 @@ func deleteCommand(c *Context, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := (<-Srv.Store.Command().Delete(id, model.GetMillis())).Err; err != nil {
+	if err := (<-app.Srv.Store.Command().Delete(id, model.GetMillis())).Err; err != nil {
 		c.Err = err
 		return
 	}

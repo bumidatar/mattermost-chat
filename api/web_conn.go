@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/einterfaces"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/utils"
@@ -189,7 +190,7 @@ func (webCon *WebConn) ShouldSendEvent(msg *model.WebSocketEvent) bool {
 
 		// Only broadcast typing messages if less than 1K people in channel
 		if msg.Event == model.WEBSOCKET_EVENT_TYPING {
-			if result := <-Srv.Store.Channel().GetMemberCount(msg.Broadcast.ChannelId, true); result.Err != nil {
+			if result := <-app.Srv.Store.Channel().GetMemberCount(msg.Broadcast.ChannelId, true); result.Err != nil {
 				l4g.Error("webhub.shouldSendEvent: " + result.Err.Error())
 				return false
 			} else {
@@ -205,7 +206,7 @@ func (webCon *WebConn) ShouldSendEvent(msg *model.WebSocketEvent) bool {
 		}
 
 		if webCon.AllChannelMembers == nil {
-			if result := <-Srv.Store.Channel().GetAllChannelMembersForUser(webCon.UserId, true); result.Err != nil {
+			if result := <-app.Srv.Store.Channel().GetAllChannelMembersForUser(webCon.UserId, true); result.Err != nil {
 				l4g.Error("webhub.shouldSendEvent: " + result.Err.Error())
 				return false
 			} else {

@@ -10,6 +10,7 @@ import (
 
 	l4g "github.com/alecthomas/log4go"
 
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/einterfaces"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/utils"
@@ -111,8 +112,8 @@ func InvalidateCacheForChannel(channelId string) {
 }
 
 func InvalidateCacheForChannelSkipClusterSend(channelId string) {
-	Srv.Store.User().InvalidateProfilesInChannelCache(channelId)
-	Srv.Store.Channel().InvalidateMemberCount(channelId)
+	app.Srv.Store.User().InvalidateProfilesInChannelCache(channelId)
+	app.Srv.Store.Channel().InvalidateMemberCount(channelId)
 }
 
 func InvalidateCacheForChannelPosts(channelId string) {
@@ -124,7 +125,7 @@ func InvalidateCacheForChannelPosts(channelId string) {
 }
 
 func InvalidateCacheForChannelPostsSkipClusterSend(channelId string) {
-	Srv.Store.Post().InvalidatePostEtagCache(channelId)
+	app.Srv.Store.Post().InvalidatePostEtagCache(channelId)
 }
 
 func InvalidateCacheForUser(userId string) {
@@ -136,9 +137,9 @@ func InvalidateCacheForUser(userId string) {
 }
 
 func InvalidateCacheForUserSkipClusterSend(userId string) {
-	Srv.Store.Channel().InvalidateAllChannelMembersForUser(userId)
-	Srv.Store.User().InvalidateProfilesInChannelCacheByUser(userId)
-	Srv.Store.User().InvalidatProfileCacheForUser(userId)
+	app.Srv.Store.Channel().InvalidateAllChannelMembersForUser(userId)
+	app.Srv.Store.User().InvalidateProfilesInChannelCacheByUser(userId)
+	app.Srv.Store.User().InvalidatProfileCacheForUser(userId)
 
 	if len(hubs) != 0 {
 		GetHubForUserId(userId).InvalidateUser(userId)

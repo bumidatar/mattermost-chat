@@ -83,7 +83,7 @@ func createChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 	if channel.TeamId == c.TeamId {
 
 		// Get total number of channels on current team
-		if result := <-Srv.Store.Channel().GetTeamChannels(channel.TeamId); result.Err != nil {
+		if result := <-app.Srv.Store.Channel().GetTeamChannels(channel.TeamId); result.Err != nil {
 			c.Err = model.NewLocAppError("createChannel", "api.channel.get_channels.error", nil, result.Err.Message)
 			return
 		} else {
@@ -106,7 +106,7 @@ func createChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateChannel(c *Context, channel *model.Channel, addMember bool) (*model.Channel, *model.AppError) {
-	if result := <-Srv.Store.Channel().Save(channel); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().Save(channel); result.Err != nil {
 		return nil, result.Err
 	} else {
 		sc := result.Data.(*model.Channel)
@@ -119,7 +119,7 @@ func CreateChannel(c *Context, channel *model.Channel, addMember bool) (*model.C
 				NotifyProps: model.GetDefaultChannelNotifyProps(),
 			}
 
-			if cmresult := <-Srv.Store.Channel().SaveMember(cm); cmresult.Err != nil {
+			if cmresult := <-app.Srv.Store.Channel().SaveMember(cm); cmresult.Err != nil {
 				return nil, cmresult.Err
 			}
 
@@ -154,13 +154,13 @@ func createDirectChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateDirectChannel(userId string, otherUserId string) (*model.Channel, *model.AppError) {
-	uc := Srv.Store.User().Get(otherUserId)
+	uc := app.Srv.Store.User().Get(otherUserId)
 
 	if uresult := <-uc; uresult.Err != nil {
 		return nil, model.NewLocAppError("CreateDirectChannel", "api.channel.create_direct_channel.invalid_user.app_error", nil, otherUserId)
 	}
 
-	if result := <-Srv.Store.Channel().CreateDirectChannel(userId, otherUserId); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().CreateDirectChannel(userId, otherUserId); result.Err != nil {
 		if result.Err.Id == store.CHANNEL_EXISTS_ERROR {
 			return result.Data.(*model.Channel), nil
 		} else {
@@ -218,8 +218,8 @@ func updateChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sc := Srv.Store.Channel().Get(channel.Id)
-	cmc := Srv.Store.Channel().GetMember(channel.Id, c.Session.UserId)
+	sc := app.Srv.Store.Channel().Get(channel.Id)
+	cmc := app.Srv.Store.Channel().GetMember(channel.Id, c.Session.UserId)
 
 	if cresult := <-sc; cresult.Err != nil {
 		c.Err = cresult.Err
@@ -264,7 +264,7 @@ func updateChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 			oldChannel.Type = channel.Type
 		}
 
-		if ucresult := <-Srv.Store.Channel().Update(oldChannel); ucresult.Err != nil {
+		if ucresult := <-app.Srv.Store.Channel().Update(oldChannel); ucresult.Err != nil {
 			c.Err = ucresult.Err
 			return
 		} else {
@@ -289,8 +289,8 @@ func updateChannelHeader(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sc := Srv.Store.Channel().Get(channelId)
-	cmc := Srv.Store.Channel().GetMember(channelId, c.Session.UserId)
+	sc := app.Srv.Store.Channel().Get(channelId)
+	cmc := app.Srv.Store.Channel().GetMember(channelId, c.Session.UserId)
 
 	if cresult := <-sc; cresult.Err != nil {
 		c.Err = cresult.Err
@@ -309,7 +309,7 @@ func updateChannelHeader(c *Context, w http.ResponseWriter, r *http.Request) {
 		oldChannelHeader := channel.Header
 		channel.Header = channelHeader
 
-		if ucresult := <-Srv.Store.Channel().Update(channel); ucresult.Err != nil {
+		if ucresult := <-app.Srv.Store.Channel().Update(channel); ucresult.Err != nil {
 			c.Err = ucresult.Err
 			return
 		} else {
@@ -321,7 +321,7 @@ func updateChannelHeader(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func PostUpdateChannelHeaderMessage(c *Context, channelId string, oldChannelHeader, newChannelHeader string) {
-	uc := Srv.Store.User().Get(c.Session.UserId)
+	uc := app.Srv.Store.User().Get(c.Session.UserId)
 
 	if uresult := <-uc; uresult.Err != nil {
 		l4g.Error(utils.T("api.channel.post_update_channel_header_message_and_forget.retrieve_user.error"), uresult.Err)
@@ -369,8 +369,8 @@ func updateChannelPurpose(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sc := Srv.Store.Channel().Get(channelId)
-	cmc := Srv.Store.Channel().GetMember(channelId, c.Session.UserId)
+	sc := app.Srv.Store.Channel().Get(channelId)
+	cmc := app.Srv.Store.Channel().GetMember(channelId, c.Session.UserId)
 
 	if cresult := <-sc; cresult.Err != nil {
 		c.Err = cresult.Err
@@ -388,7 +388,7 @@ func updateChannelPurpose(c *Context, w http.ResponseWriter, r *http.Request) {
 
 		channel.Purpose = channelPurpose
 
-		if ucresult := <-Srv.Store.Channel().Update(channel); ucresult.Err != nil {
+		if ucresult := <-app.Srv.Store.Channel().Update(channel); ucresult.Err != nil {
 			c.Err = ucresult.Err
 			return
 		} else {
@@ -403,10 +403,10 @@ func getChannels(c *Context, w http.ResponseWriter, r *http.Request) {
 	// user is already in the team
 	// Get's all channels the user is a member of
 
-	if result := <-Srv.Store.Channel().GetChannels(c.TeamId, c.Session.UserId); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().GetChannels(c.TeamId, c.Session.UserId); result.Err != nil {
 		if result.Err.Id == "store.sql_channel.get_channels.not_found.app_error" {
 			// lets make sure the user is valid
-			if result := <-Srv.Store.User().Get(c.Session.UserId); result.Err != nil {
+			if result := <-app.Srv.Store.User().Get(c.Session.UserId); result.Err != nil {
 				c.Err = result.Err
 				c.RemoveSessionCookie(w, r)
 				l4g.Error(utils.T("api.channel.get_channels.error"), c.Session.UserId)
@@ -444,7 +444,7 @@ func getMoreChannelsPage(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Channel().GetMoreChannels(c.TeamId, c.Session.UserId, offset, limit); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().GetMoreChannels(c.TeamId, c.Session.UserId, offset, limit); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -458,7 +458,7 @@ func getChannelCounts(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	// user is already in the team
 
-	if result := <-Srv.Store.Channel().GetChannelCounts(c.TeamId, c.Session.UserId); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().GetChannelCounts(c.TeamId, c.Session.UserId); result.Err != nil {
 		c.Err = model.NewLocAppError("getChannelCounts", "api.channel.get_channel_counts.app_error", nil, result.Err.Message)
 		return
 	} else if HandleEtag(result.Data.(*model.ChannelCounts).Etag(), w, r) {
@@ -501,15 +501,15 @@ func join(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func JoinChannelByName(c *Context, userId string, teamId string, channelName string) (*model.AppError, *model.Channel) {
-	channelChannel := Srv.Store.Channel().GetByName(teamId, channelName)
-	userChannel := Srv.Store.User().Get(userId)
+	channelChannel := app.Srv.Store.Channel().GetByName(teamId, channelName)
+	userChannel := app.Srv.Store.User().Get(userId)
 
 	return joinChannel(c, channelChannel, userChannel)
 }
 
 func JoinChannelById(c *Context, userId string, channelId string) (*model.AppError, *model.Channel) {
-	channelChannel := Srv.Store.Channel().Get(channelId)
-	userChannel := Srv.Store.User().Get(userId)
+	channelChannel := app.Srv.Store.Channel().Get(channelId)
+	userChannel := app.Srv.Store.User().Get(userId)
 
 	return joinChannel(c, channelChannel, userChannel)
 }
@@ -523,7 +523,7 @@ func joinChannel(c *Context, channelChannel store.StoreChannel, userChannel stor
 		channel := cresult.Data.(*model.Channel)
 		user := uresult.Data.(*model.User)
 
-		if mresult := <-Srv.Store.Channel().GetMember(channel.Id, user.Id); mresult.Err == nil && mresult.Data != nil {
+		if mresult := <-app.Srv.Store.Channel().GetMember(channel.Id, user.Id); mresult.Err == nil && mresult.Data != nil {
 			// the user is already in the channel so just return successful
 			return nil, channel
 		}
@@ -565,8 +565,8 @@ func AddUserToChannel(user *model.User, channel *model.Channel) (*model.ChannelM
 		return nil, model.NewLocAppError("AddUserToChannel", "api.channel.add_user_to_channel.type.app_error", nil, "")
 	}
 
-	tmchan := Srv.Store.Team().GetMember(channel.TeamId, user.Id)
-	cmchan := Srv.Store.Channel().GetMember(channel.Id, user.Id)
+	tmchan := app.Srv.Store.Team().GetMember(channel.TeamId, user.Id)
+	cmchan := app.Srv.Store.Channel().GetMember(channel.Id, user.Id)
 
 	if result := <-tmchan; result.Err != nil {
 		return nil, result.Err
@@ -592,7 +592,7 @@ func AddUserToChannel(user *model.User, channel *model.Channel) (*model.ChannelM
 		NotifyProps: model.GetDefaultChannelNotifyProps(),
 		Roles:       model.ROLE_CHANNEL_USER.Id,
 	}
-	if result := <-Srv.Store.Channel().SaveMember(newMember); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().SaveMember(newMember); result.Err != nil {
 		l4g.Error("Failed to add member user_id=%v channel_id=%v err=%v", user.Id, channel.Id, result.Err)
 		return nil, model.NewLocAppError("AddUserToChannel", "api.channel.add_user.to.channel.failed.app_error", nil, "")
 	}
@@ -615,13 +615,13 @@ func JoinDefaultChannels(teamId string, user *model.User, channelRole string) *m
 
 	var err *model.AppError = nil
 
-	if result := <-Srv.Store.Channel().GetByName(teamId, "town-square"); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().GetByName(teamId, "town-square"); result.Err != nil {
 		err = result.Err
 	} else {
 		cm := &model.ChannelMember{ChannelId: result.Data.(*model.Channel).Id, UserId: user.Id,
 			Roles: channelRole, NotifyProps: model.GetDefaultChannelNotifyProps()}
 
-		if cmResult := <-Srv.Store.Channel().SaveMember(cm); cmResult.Err != nil {
+		if cmResult := <-app.Srv.Store.Channel().SaveMember(cm); cmResult.Err != nil {
 			err = cmResult.Err
 		}
 
@@ -639,13 +639,13 @@ func JoinDefaultChannels(teamId string, user *model.User, channelRole string) *m
 		InvalidateCacheForChannel(result.Data.(*model.Channel).Id)
 	}
 
-	if result := <-Srv.Store.Channel().GetByName(teamId, "off-topic"); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().GetByName(teamId, "off-topic"); result.Err != nil {
 		err = result.Err
 	} else {
 		cm := &model.ChannelMember{ChannelId: result.Data.(*model.Channel).Id, UserId: user.Id,
 			Roles: channelRole, NotifyProps: model.GetDefaultChannelNotifyProps()}
 
-		if cmResult := <-Srv.Store.Channel().SaveMember(cm); cmResult.Err != nil {
+		if cmResult := <-app.Srv.Store.Channel().SaveMember(cm); cmResult.Err != nil {
 			err = cmResult.Err
 		}
 
@@ -671,9 +671,9 @@ func leave(c *Context, w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["channel_id"]
 
-	sc := Srv.Store.Channel().Get(id)
-	uc := Srv.Store.User().Get(c.Session.UserId)
-	ccm := Srv.Store.Channel().GetMemberCount(id, false)
+	sc := app.Srv.Store.Channel().Get(id)
+	uc := app.Srv.Store.User().Get(c.Session.UserId)
+	ccm := app.Srv.Store.Channel().GetMemberCount(id, false)
 
 	if cresult := <-sc; cresult.Err != nil {
 		c.Err = cresult.Err
@@ -707,7 +707,7 @@ func leave(c *Context, w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if cmresult := <-Srv.Store.Channel().RemoveMember(channel.Id, c.Session.UserId); cmresult.Err != nil {
+		if cmresult := <-app.Srv.Store.Channel().RemoveMember(channel.Id, c.Session.UserId); cmresult.Err != nil {
 			c.Err = cmresult.Err
 			return
 		}
@@ -727,12 +727,12 @@ func deleteChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["channel_id"]
 
-	sc := Srv.Store.Channel().Get(id)
-	scm := Srv.Store.Channel().GetMember(id, c.Session.UserId)
-	cmc := Srv.Store.Channel().GetMemberCount(id, false)
-	uc := Srv.Store.User().Get(c.Session.UserId)
-	ihc := Srv.Store.Webhook().GetIncomingByChannel(id)
-	ohc := Srv.Store.Webhook().GetOutgoingByChannel(id)
+	sc := app.Srv.Store.Channel().Get(id)
+	scm := app.Srv.Store.Channel().GetMember(id, c.Session.UserId)
+	cmc := app.Srv.Store.Channel().GetMemberCount(id, false)
+	uc := app.Srv.Store.User().Get(c.Session.UserId)
+	ihc := app.Srv.Store.Webhook().GetIncomingByChannel(id)
+	ohc := app.Srv.Store.Webhook().GetOutgoingByChannel(id)
 
 	if cresult := <-sc; cresult.Err != nil {
 		c.Err = cresult.Err
@@ -786,7 +786,7 @@ func deleteChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 		now := model.GetMillis()
 		for _, hook := range incomingHooks {
 			go func() {
-				if result := <-Srv.Store.Webhook().DeleteIncoming(hook.Id, now); result.Err != nil {
+				if result := <-app.Srv.Store.Webhook().DeleteIncoming(hook.Id, now); result.Err != nil {
 					l4g.Error(utils.T("api.channel.delete_channel.incoming_webhook.error"), hook.Id)
 				}
 			}()
@@ -794,13 +794,13 @@ func deleteChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 
 		for _, hook := range outgoingHooks {
 			go func() {
-				if result := <-Srv.Store.Webhook().DeleteOutgoing(hook.Id, now); result.Err != nil {
+				if result := <-app.Srv.Store.Webhook().DeleteOutgoing(hook.Id, now); result.Err != nil {
 					l4g.Error(utils.T("api.channel.delete_channel.outgoing_webhook.error"), hook.Id)
 				}
 			}()
 		}
 
-		if dresult := <-Srv.Store.Channel().Delete(channel.Id, model.GetMillis()); dresult.Err != nil {
+		if dresult := <-app.Srv.Store.Channel().Delete(channel.Id, model.GetMillis()); dresult.Err != nil {
 			c.Err = dresult.Err
 			return
 		}
@@ -837,7 +837,7 @@ func setLastViewedAt(c *Context, w http.ResponseWriter, r *http.Request) {
 	data := model.StringInterfaceFromJson(r.Body)
 	newLastViewedAt := int64(data["last_viewed_at"].(float64))
 
-	Srv.Store.Channel().SetLastViewedAt(id, c.Session.UserId, newLastViewedAt)
+	app.Srv.Store.Channel().SetLastViewedAt(id, c.Session.UserId, newLastViewedAt)
 
 	preference := model.Preference{
 		UserId:   c.Session.UserId,
@@ -846,7 +846,7 @@ func setLastViewedAt(c *Context, w http.ResponseWriter, r *http.Request) {
 		Value:    id,
 	}
 
-	Srv.Store.Preference().Save(&model.Preferences{preference})
+	app.Srv.Store.Preference().Save(&model.Preferences{preference})
 
 	message := model.NewWebSocketEvent(model.WEBSOCKET_EVENT_CHANNEL_VIEWED, c.TeamId, "", c.Session.UserId, nil)
 	message.Add("channel_id", id)
@@ -872,7 +872,7 @@ func updateLastViewedAt(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	doClearPush := false
 	if *utils.Cfg.EmailSettings.SendPushNotifications && !c.Session.IsMobileApp() && active {
-		if result := <-Srv.Store.User().GetUnreadCountForChannel(c.Session.UserId, id); result.Err != nil {
+		if result := <-app.Srv.Store.User().GetUnreadCountForChannel(c.Session.UserId, id); result.Err != nil {
 			l4g.Error(utils.T("api.channel.update_last_viewed_at.get_unread_count_for_channel.error"), c.Session.UserId, id, result.Err.Error())
 		} else {
 			if result.Data.(int64) > 0 {
@@ -887,7 +887,7 @@ func updateLastViewedAt(c *Context, w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	Srv.Store.Channel().UpdateLastViewedAt(id, c.Session.UserId)
+	app.Srv.Store.Channel().UpdateLastViewedAt(id, c.Session.UserId)
 
 	// Must be after update so that unread count is correct
 	if doClearPush {
@@ -901,7 +901,7 @@ func updateLastViewedAt(c *Context, w http.ResponseWriter, r *http.Request) {
 		Value:    id,
 	}
 
-	Srv.Store.Preference().Save(&model.Preferences{preference})
+	app.Srv.Store.Preference().Save(&model.Preferences{preference})
 
 	message := model.NewWebSocketEvent(model.WEBSOCKET_EVENT_CHANNEL_VIEWED, c.TeamId, "", c.Session.UserId, nil)
 	message.Add("channel_id", id)
@@ -917,8 +917,8 @@ func getChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["channel_id"]
 
-	cchan := Srv.Store.Channel().Get(id)
-	cmchan := Srv.Store.Channel().GetMember(id, c.Session.UserId)
+	cchan := app.Srv.Store.Channel().Get(id)
+	cmchan := app.Srv.Store.Channel().GetMember(id, c.Session.UserId)
 
 	if cresult := <-cchan; cresult.Err != nil {
 		c.Err = cresult.Err
@@ -951,7 +951,7 @@ func getChannelByName(c *Context, w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	channelname := params["channel_name"]
 
-	cchan := Srv.Store.Channel().GetByName(c.TeamId, channelname)
+	cchan := app.Srv.Store.Channel().GetByName(c.TeamId, channelname)
 
 	if cresult := <-cchan; cresult.Err != nil {
 		c.Err = cresult.Err
@@ -982,7 +982,7 @@ func getChannelStats(c *Context, w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["channel_id"]
 
-	sc := Srv.Store.Channel().Get(id)
+	sc := app.Srv.Store.Channel().Get(id)
 	var channel *model.Channel
 	if result := <-sc; result.Err != nil {
 		c.Err = result.Err
@@ -991,7 +991,7 @@ func getChannelStats(c *Context, w http.ResponseWriter, r *http.Request) {
 		channel = result.Data.(*model.Channel)
 	}
 
-	if result := <-Srv.Store.Channel().GetMemberCount(id, true); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().GetMemberCount(id, true); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -1021,7 +1021,7 @@ func getChannelMember(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Channel().GetMember(channelId, userId); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().GetMember(channelId, userId); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -1031,7 +1031,7 @@ func getChannelMember(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func getMyChannelMembers(c *Context, w http.ResponseWriter, r *http.Request) {
-	if result := <-Srv.Store.Channel().GetMembersForUser(c.TeamId, c.Session.UserId); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().GetMembersForUser(c.TeamId, c.Session.UserId); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -1052,9 +1052,9 @@ func addMember(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sc := Srv.Store.Channel().Get(id)
-	ouc := Srv.Store.User().Get(c.Session.UserId)
-	nuc := Srv.Store.User().Get(userId)
+	sc := app.Srv.Store.Channel().Get(id)
+	ouc := app.Srv.Store.User().Get(c.Session.UserId)
+	nuc := app.Srv.Store.User().Get(userId)
 	if nresult := <-nuc; nresult.Err != nil {
 		c.Err = model.NewLocAppError("addMember", "api.channel.add_member.find_user.app_error", nil, "")
 		return
@@ -1089,7 +1089,7 @@ func addMember(c *Context, w http.ResponseWriter, r *http.Request) {
 
 			go PostUserAddRemoveMessage(c, channel.Id, fmt.Sprintf(utils.T("api.channel.add_member.added"), nUser.Username, oUser.Username), model.POST_ADD_REMOVE)
 
-			<-Srv.Store.Channel().UpdateLastViewedAt(id, oUser.Id)
+			<-app.Srv.Store.Channel().UpdateLastViewedAt(id, oUser.Id)
 			w.Write([]byte(cm.ToJson()))
 		}
 	}
@@ -1107,9 +1107,9 @@ func removeMember(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sc := Srv.Store.Channel().Get(channelId)
-	cmc := Srv.Store.Channel().GetMember(channelId, c.Session.UserId)
-	ouc := Srv.Store.User().Get(userIdToRemove)
+	sc := app.Srv.Store.Channel().Get(channelId)
+	cmc := app.Srv.Store.Channel().GetMember(channelId, c.Session.UserId)
+	ouc := app.Srv.Store.User().Get(userIdToRemove)
 
 	if oresult := <-ouc; oresult.Err != nil {
 		c.Err = model.NewLocAppError("removeMember", "api.channel.remove_member.user.app_error", nil, "")
@@ -1156,7 +1156,7 @@ func RemoveUserFromChannel(userIdToRemove string, removerUserId string, channel 
 		return model.NewLocAppError("updateChannel", "api.channel.remove_user_from_channel.deleted.app_error", nil, "")
 	}
 
-	if cmresult := <-Srv.Store.Channel().RemoveMember(channel.Id, userIdToRemove); cmresult.Err != nil {
+	if cmresult := <-app.Srv.Store.Channel().RemoveMember(channel.Id, userIdToRemove); cmresult.Err != nil {
 		return cmresult.Err
 	}
 
@@ -1196,7 +1196,7 @@ func updateNotifyProps(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := <-Srv.Store.Channel().GetMember(channelId, userId)
+	result := <-app.Srv.Store.Channel().GetMember(channelId, userId)
 	if result.Err != nil {
 		c.Err = result.Err
 		return
@@ -1213,7 +1213,7 @@ func updateNotifyProps(c *Context, w http.ResponseWriter, r *http.Request) {
 		member.NotifyProps["desktop"] = desktop
 	}
 
-	if result := <-Srv.Store.Channel().UpdateMember(&member); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().UpdateMember(&member); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -1243,7 +1243,7 @@ func searchMoreChannels(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := <-Srv.Store.Channel().SearchMore(c.Session.UserId, c.TeamId, props.Term); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().SearchMore(c.Session.UserId, c.TeamId, props.Term); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {
@@ -1263,7 +1263,7 @@ func autocompleteChannels(c *Context, w http.ResponseWriter, r *http.Request) {
 
 	var channels *model.ChannelList
 
-	if result := <-Srv.Store.Channel().SearchInTeam(c.TeamId, term); result.Err != nil {
+	if result := <-app.Srv.Store.Channel().SearchInTeam(c.TeamId, term); result.Err != nil {
 		c.Err = result.Err
 		return
 	} else {

@@ -186,7 +186,7 @@ func (me *LoadTestProvider) SetupCommand(c *Context, channelId string, message s
 	} else {
 
 		var team *model.Team
-		if tr := <-Srv.Store.Team().Get(c.TeamId); tr.Err != nil {
+		if tr := <-app.Srv.Store.Team().Get(c.TeamId); tr.Err != nil {
 			return &model.CommandResponse{Text: "Failed to create testing environment", ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL}
 		} else {
 			team = tr.Data.(*model.Team)
@@ -221,7 +221,7 @@ func (me *LoadTestProvider) UsersCommand(c *Context, channelId string, message s
 	}
 
 	var team *model.Team
-	if tr := <-Srv.Store.Team().Get(c.TeamId); tr.Err != nil {
+	if tr := <-app.Srv.Store.Team().Get(c.TeamId); tr.Err != nil {
 		return &model.CommandResponse{Text: "Failed to create testing environment", ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL}
 	} else {
 		team = tr.Data.(*model.Team)
@@ -251,7 +251,7 @@ func (me *LoadTestProvider) ChannelsCommand(c *Context, channelId string, messag
 	}
 
 	var team *model.Team
-	if tr := <-Srv.Store.Team().Get(c.TeamId); tr.Err != nil {
+	if tr := <-app.Srv.Store.Team().Get(c.TeamId); tr.Err != nil {
 		return &model.CommandResponse{Text: "Failed to create testing environment", ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL}
 	} else {
 		team = tr.Data.(*model.Team)
@@ -290,7 +290,7 @@ func (me *LoadTestProvider) PostsCommand(c *Context, channelId string, message s
 	}
 
 	var usernames []string
-	if result := <-Srv.Store.User().GetProfiles(c.TeamId, 0, 1000); result.Err == nil {
+	if result := <-app.Srv.Store.User().GetProfiles(c.TeamId, 0, 1000); result.Err == nil {
 		profileUsers := result.Data.(map[string]*model.User)
 		usernames = make([]string, len(profileUsers))
 		i := 0

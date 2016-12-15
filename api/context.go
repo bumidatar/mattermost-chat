@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	goi18n "github.com/nicksnyder/go-i18n/i18n"
 
+	"github.com/mattermost/platform/app"
 	"github.com/mattermost/platform/einterfaces"
 	"github.com/mattermost/platform/model"
 	"github.com/mattermost/platform/store"
@@ -297,7 +298,7 @@ func GetProtocol(r *http.Request) string {
 
 func (c *Context) LogAudit(extraInfo string) {
 	audit := &model.Audit{UserId: c.Session.UserId, IpAddress: c.IpAddress, Action: c.Path, ExtraInfo: extraInfo, SessionId: c.Session.Id}
-	if r := <-Srv.Store.Audit().Save(audit); r.Err != nil {
+	if r := <-app.Srv.Store.Audit().Save(audit); r.Err != nil {
 		c.LogError(r.Err)
 	}
 }
@@ -309,7 +310,7 @@ func (c *Context) LogAuditWithUserId(userId, extraInfo string) {
 	}
 
 	audit := &model.Audit{UserId: userId, IpAddress: c.IpAddress, Action: c.Path, ExtraInfo: extraInfo, SessionId: c.Session.Id}
-	if r := <-Srv.Store.Audit().Save(audit); r.Err != nil {
+	if r := <-app.Srv.Store.Audit().Save(audit); r.Err != nil {
 		c.LogError(r.Err)
 	}
 }
@@ -349,7 +350,7 @@ func (c *Context) MfaRequired() {
 		return
 	}
 
-	if result := <-Srv.Store.User().Get(c.Session.UserId); result.Err != nil {
+	if result := <-app.Srv.Store.User().Get(c.Session.UserId); result.Err != nil {
 		c.Err = model.NewLocAppError("", "api.context.session_expired.app_error", nil, "MfaRequired")
 		c.Err.StatusCode = http.StatusUnauthorized
 		return
@@ -415,7 +416,7 @@ func (c *Context) setTeamURL(url string, valid bool) {
 }
 
 func (c *Context) SetTeamURLFromSession() {
-	if result := <-Srv.Store.Team().Get(c.TeamId); result.Err == nil {
+	if result := <-app.Srv.Store.Team().Get(c.TeamId); result.Err == nil {
 		c.setTeamURL(c.GetSiteURL()+"/"+result.Data.(*model.Team).Name, true)
 	}
 }
@@ -512,7 +513,7 @@ func GetSession(token string) *model.Session {
 	}
 
 	if session == nil {
-		if sessionResult := <-Srv.Store.Session().Get(token); sessionResult.Err != nil {
+		if sessionResult := <-app.Srv.Store.Session().Get(token); sessionResult.Err != nil {
 			l4g.Error(utils.T("api.context.invalid_token.error"), token, sessionResult.Err.DetailedError)
 		} else {
 			session = sessionResult.Data.(*model.Session)
